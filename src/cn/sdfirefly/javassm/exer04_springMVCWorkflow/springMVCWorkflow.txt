@@ -1,0 +1,60 @@
+
+简单的谈一下SpringMVC的工作流程?
+(见 图 src/SpringMVC的运行流程图1.jpg 和 SpringMVC的运行流程图2.png)
+
+（个人简答：
+    1.用户发送请求给 前端（中央）控制器（DispatcherServlet）
+
+    2.前端（中央）控制器（DispatcherServlet） 收到请求，通过 doDispatch() 方法调用 处理器映射器（HandlerMapping）
+
+    3.处理器映射器（HandlerMapping） 根据自己保存的请求映射信息找到并返回当前请求的 处理器执行链（HandlerExecutionChain）
+（其中包含 处理器拦截器（HandlerIntercepter）、处理器对象（Handler））
+
+    4.根据当前 处理器（Handler）找到它的 处理器适配器（HandlerAdapter）
+
+        4.5.处理器拦截器（HandlerIntercepter）的 preHandle()方法 先执行
+
+    5.处理器适配器（HandlerAdapter）调用具体的 处理器（Handler）<即Controller> 执行目标方法得到并返回 ModelAndView对象
+
+        5.5.处理器拦截器（HandlerIntercepter）的 PostHandle() 方法执行
+        5.5.5.如果有异常，使用 异常解析器（HandlerExceptionResolver）处理异常（处理完后还会返回 ModelAndView对象）
+
+    6.前端控制器（DispatcherServlet）调用视图解析器（viewResolver），根据视图名得到视图对象，视图对象调用 render() 方法渲染视图，返回 view
+        6.5.执行 处理器拦截器（HandlerIntercepter）的 afterCompletion() 方法
+    7.响应用户。
+）
+
+
+
+=====================================================================================
+@Controller
+public class SpringMVCHandler {
+
+	public static final String SUCCESS="success";
+
+	//1.简单的谈一下SpringMVC的工作流程
+
+	//处理模型数据方式一：将方法的返回值设置为ModelAndView
+	@RequestMapping("/testModelAndView")
+	public ModelAndView testModelAndView() {
+		//1.创建ModelAndView对象
+		ModelAndView mav = new ModelAndView();
+		//2.设置模型数据，最终会放到request域中
+		mav.addObject("user", "admin");
+		//3.设置视图
+		mav.setViewName("success");
+		return mav;
+	}
+	/*
+	 * ★处理模型数据方式二：方法的返回值仍是String类型，在方法的入参中传入Map、Model或者ModelMap
+	 * 	不管将处理器方法的返回值设置为ModelAndView还是在方法的入参中传入Map、Model或者ModelMap，
+	 *  SpringMVC都会转换为一个ModelAndView对象
+	 */
+	@RequestMapping("/testMap")
+	public String testMap(Map<String , Object> map) {
+		//向Map中添加模型数据，最终会自动放到request域中
+		map.put("user", new Employee(1, "韩总", "hybing@atguigu.com", new Department(101, "教学部")));
+		return SUCCESS;
+	}
+
+}
